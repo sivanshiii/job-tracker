@@ -1,137 +1,209 @@
-# Job Tracker (Spring Boot + React + PostgreSQL)
+# Job Tracker
 
-A full stack app to log job applications, move each one through a pipeline
-(Wishlist, Applied, Interview, Offer, Rejected), search, filter and paginate.
+A full-stack web application for managing job applications, tracking progress through the recruitment pipeline, and keeping your job search organized.
 
-## Tech stack
+**React · Spring Boot · PostgreSQL · JWT · Docker**
 
-| Layer | Tools |
+---
+
+## Overview
+
+Job Tracker provides a centralized place to manage job applications, track their status, and monitor progress throughout the job search process.
+
+## Features
+
+- **User Authentication** — Register and log in with JWT-based authentication.
+- **Application Management** — Create, view, update, and delete job applications.
+- **Application Pipeline** — Track applications across Wishlist, Applied, Interview, Offer, and Rejected stages.
+- **Status Updates** — Update an application's recruitment stage.
+- **Search & Filtering** — Search applications and filter by status.
+- **Pagination** — Navigate through application records.
+- **Dashboard Statistics** — View application counts across different statuses.
+- **Data Isolation** — Users can access only their own application records.
+
+## Tech Stack
+
+| Layer | Technologies |
 |---|---|
-| Backend | Java 17, Spring Boot 3.3, Spring Web, Spring Data JPA (Hibernate), Spring Security, JWT (jjwt), Bean Validation |
-| Database | PostgreSQL 16 |
-| Frontend | React 18, React Router, Vite, plain CSS |
-| Quality | JUnit 5 + Mockito, Swagger/OpenAPI docs |
-| DevOps | Docker, Docker Compose, AWS EC2 |
+| Frontend | React 18, React Router, Vite, CSS |
+| Backend | Java 17, Spring Boot 3.3, Spring Web |
+| Security | Spring Security, JWT, BCrypt |
+| Database | PostgreSQL 16, Spring Data JPA, Hibernate |
+| API Documentation | Swagger / OpenAPI |
+| Testing | JUnit 5, Mockito |
+| Containerization | Docker, Docker Compose |
 
-## Project structure
+## Architecture
 
+```text
+React Frontend
+      |
+      | REST API + JWT
+      v
+Spring Boot Backend
+      |
+      | Spring Data JPA / Hibernate
+      v
+PostgreSQL Database
 ```
+
+The backend follows a layered architecture:
+
+```text
+Controller → Service → Repository → Database
+```
+
+## Application Statuses
+
+| Status | Description |
+|---|---|
+| Wishlist | Potential opportunities to apply for |
+| Applied | Applications submitted |
+| Interview | Applications progressing through interviews |
+| Offer | Offers received |
+| Rejected | Applications that were unsuccessful |
+
+## Project Structure
+
+```text
 job-tracker/
-  backend/   Spring Boot API (controller -> service -> repository -> entity)
-  frontend/  React app
-  docker-compose.yml
+├── backend/
+│   ├── src/
+│   │   ├── main/java/com/jobtracker/
+│   │   │   ├── config/
+│   │   │   ├── controller/
+│   │   │   ├── dto/
+│   │   │   ├── entity/
+│   │   │   ├── exception/
+│   │   │   ├── repository/
+│   │   │   └── service/
+│   │   └── resources/
+│   ├── Dockerfile
+│   └── pom.xml
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── App.jsx
+│   │   ├── AuthContext.jsx
+│   │   └── api.js
+│   └── package.json
+├── docker-compose.yml
+└── README.md
 ```
 
-## Run it locally
+## Getting Started
 
-You need: JDK 17, Maven, Node 18+, and Docker (for PostgreSQL).
+### Prerequisites
+
+- Java 17
+- Maven
+- Node.js 18+
+- Docker Desktop
+
+### 1. Clone the repository
 
 ```bash
-# 1. Start PostgreSQL only
-docker compose up -d db
+git clone https://github.com/sivanshiii/job-tracker.git
+cd job-tracker
+```
 
-# 2. Start the API (http://localhost:8080)
+### 2. Start PostgreSQL
+
+```bash
+docker compose up -d db
+```
+
+### 3. Start the Backend
+
+Open a terminal:
+
+```bash
 cd backend
 mvn spring-boot:run
+```
 
-# 3. Start the React app (http://localhost:5173)
-cd ../frontend
+The backend runs at:
+
+`http://localhost:8080`
+
+### 4. Start the Frontend
+
+Open another terminal:
+
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-Swagger UI: http://localhost:8080/swagger-ui.html
-Tables are created automatically by Hibernate (`ddl-auto=update`).
+The frontend runs at:
 
-To run API + database fully in Docker: `docker compose up --build`
+`http://localhost:5173`
 
-## API
+### 5. Access API Documentation
 
-| Method | Endpoint | Purpose |
+Swagger UI:
+
+`http://localhost:8080/swagger-ui.html`
+
+Hibernate automatically manages the database schema using the configured JPA settings.
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/auth/register` | Create an account, returns a JWT |
-| POST | `/api/auth/login` | Log in, returns a JWT |
-| GET | `/api/jobs?status=&q=&page=&size=` | List your applications (filter, search, paginate) |
-| GET | `/api/jobs/stats` | Count of applications per status |
-| GET | `/api/jobs/{id}` | One application |
-| POST | `/api/jobs` | Create |
-| PUT | `/api/jobs/{id}` | Edit |
-| PATCH | `/api/jobs/{id}/status` | Change only the status |
-| DELETE | `/api/jobs/{id}` | Delete |
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Authenticate a user |
 
-Everything under `/api/jobs` needs the header `Authorization: Bearer <token>`.
-Each user only ever sees their own rows (queries filter by the logged-in email).
+### Job Applications
 
-Quick test with curl:
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/jobs` | List applications with search, filtering and pagination |
+| GET | `/api/jobs/stats` | Retrieve application statistics |
+| GET | `/api/jobs/{id}` | Retrieve an application |
+| POST | `/api/jobs` | Create an application |
+| PUT | `/api/jobs/{id}` | Update an application |
+| PATCH | `/api/jobs/{id}/status` | Update application status |
+| DELETE | `/api/jobs/{id}` | Delete an application |
 
-```bash
-curl -X POST localhost:8080/api/auth/register -H "Content-Type: application/json" \
-  -d '{"fullName":"Test User","email":"test@example.com","password":"password123"}'
+Protected endpoints require a JWT:
 
-curl localhost:8080/api/jobs -H "Authorization: Bearer <paste token>"
+```http
+Authorization: Bearer <token>
 ```
 
-## Build plan (about 5 sessions)
+## Security
 
-Build it yourself in this order instead of pasting everything at once. You will
-need to explain every line in an interview, so type it, run it, and break it on purpose.
+- JWT-based authentication.
+- Password hashing using BCrypt.
+- Protected REST API endpoints.
+- User-specific application access.
+- Request validation.
+- Centralized exception handling.
 
-**Session 1: Backend skeleton and database**
-- Create the project, run `docker compose up -d db`, start the app.
-- Read and type: `User`, `JobApplication`, `Status`, the two repositories.
-- Check in `psql` or DBeaver that the tables appeared. Learn what `@Entity`, `@ManyToOne`, `@Enumerated` do.
+## Testing
 
-**Session 2: Authentication**
-- `RegisterRequest`, `LoginRequest`, `AuthService`, `AuthController`.
-- Then `JwtService`, `JwtAuthFilter`, `SecurityConfig`.
-- Test register and login in Swagger. Try a protected URL without a token (expect 401).
-- Learn: BCrypt hashing, what a JWT contains, why the filter runs before the controller.
+Backend unit tests are written using JUnit 5 and Mockito.
 
-**Session 3: Job CRUD**
-- `JobRequest`, `JobResponse`, `PageResponse`, `JobService`, `JobController`, `GlobalExceptionHandler`.
-- Test every endpoint in Swagger. Register two users and confirm user A cannot read user B's job (expect 404).
-- Learn: DTO vs entity, validation errors (400), pagination, `@Transactional`.
+Run the tests:
 
-**Session 4: React frontend**
-- `api.js`, `AuthContext.jsx`, `AuthPage.jsx`, then `Dashboard.jsx` and `JobForm.jsx`.
-- Learn: how the JWT is stored and attached to requests, protected routes, `useEffect` for loading data.
+```bash
+cd backend
+mvn test
+```
 
-**Session 5: Tests, Docker, deploy**
-- Run `mvn test`. Add 2 more tests of your own (for example: updating someone else's job fails).
-- `docker compose up --build`, then deploy to AWS (below).
-- Write screenshots and a features list into this README.
+## Future Improvements
 
-## Deploy on AWS (you already know EC2)
+- Visual analytics and application trends.
+- Interview round tracking.
+- Follow-up reminders.
+- CSV export.
+- Integration testing with Testcontainers.
 
-1. Launch an EC2 instance (Ubuntu), install Docker, open ports 80 and 22 in the Security Group (not 5432 or 8080 to the world).
-2. Copy the project over (git clone) and run the API + Postgres with `docker compose up -d --build`.
-   Set a real `JWT_SECRET` and database password in `docker-compose.yml` or an `.env` file.
-3. Build the frontend with `VITE_API_URL=http://<your-ip-or-domain>:8080 npm run build` and serve `dist/` with Nginx
-   (or put it on S3 + CloudFront), and set `CORS_ORIGINS` on the API to that frontend URL.
-4. Optional upgrade: use RDS PostgreSQL instead of the Postgres container, and an ALB in front, as in your malware-analysis project.
+---
 
-## Resume bullets (use only what you actually built)
-
-**Job Application Tracker** | Java, Spring Boot, Spring Security, JPA/Hibernate, PostgreSQL, React, Docker, AWS
-- Built a full stack job-tracking app with a Spring Boot REST API (controller-service-repository layers) and a React frontend
-- Implemented JWT authentication with Spring Security and BCrypt, with per-user data isolation on every endpoint
-- Designed a PostgreSQL schema with JPA/Hibernate; added search, status filtering and pagination
-- Wrote JUnit/Mockito unit tests, documented the API with Swagger/OpenAPI, containerised with Docker and deployed on AWS EC2
-
-Then add to the skills section: **Spring Boot, Spring Security, REST APIs, JPA/Hibernate, JUnit, Docker**.
-
-## Interview questions this project prepares you for
-
-- How does JWT authentication work here? Where is the token stored and what are the trade-offs? (localStorage is simple but exposed to XSS; httpOnly cookies are safer.)
-- Why DTOs instead of returning entities?
-- What does `@Transactional` do? What is `open-in-view=false` for?
-- How do you stop one user reading another's data? (`findByIdAndUserEmail`.)
-- Lazy vs eager loading, and the N+1 problem.
-- How would you add email reminders for follow-ups? (Scheduled job with `@Scheduled`.)
-
-## Ideas to extend it
-
-- Follow-up reminders with `@Scheduled` and email
-- Interview rounds as a second entity (one application has many rounds)
-- Dashboard charts, CSV export, refresh tokens
-- Integration tests with Testcontainers
+Built as a full-stack project to explore REST API development, authentication, database design, and frontend-backend integration using Java and React.
